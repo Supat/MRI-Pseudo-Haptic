@@ -1,4 +1,4 @@
-namespace CSGenICam.SDK;
+namespace KLabPseudoHaptic;
 
 /// <summary>
 /// Entry point for discovering and opening GenICam cameras.

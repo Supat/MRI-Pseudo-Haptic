@@ -1,4 +1,4 @@
-namespace CSGenICam.SDK;
+namespace KLabPseudoHaptic;
 
 /// <summary>
 /// A single image frame delivered from a camera.

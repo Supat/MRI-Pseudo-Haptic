@@ -1,8 +1,8 @@
-using CSGenICam.SDK;
-using CSGenICam.SDK.Exceptions;
+using KLabPseudoHaptic;
+using KLabPseudoHaptic.Exceptions;
 using Xunit;
 
-namespace CSGenICam.SDK.Tests;
+namespace KLabPseudoHaptic.Tests;
 
 public class CameraManagerTests
 {

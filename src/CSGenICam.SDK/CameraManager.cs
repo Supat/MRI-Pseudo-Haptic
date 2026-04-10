@@ -1,6 +1,6 @@
-using CSGenICam.SDK.Exceptions;
+using KLabPseudoHaptic.Exceptions;
 
-namespace CSGenICam.SDK;
+namespace KLabPseudoHaptic;
 
 /// <summary>
 /// Default <see cref="ICameraManager"/> implementation.

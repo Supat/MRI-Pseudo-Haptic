@@ -1,4 +1,4 @@
-namespace CSGenICam.SDK.Exceptions;
+namespace KLabPseudoHaptic.Exceptions;
 
 /// <summary>
 /// Thrown when reading or writing a GenICam feature fails.

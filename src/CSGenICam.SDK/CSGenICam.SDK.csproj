@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>CSGenICam.SDK</RootNamespace>
+    <RootNamespace>KLabPseudoHaptic</RootNamespace>
     <AssemblyName>CSGenICam.SDK</AssemblyName>
     <Version>0.1.0</Version>
     <Authors>CSGenICam SDK Contributors</Authors>

@@ -1,6 +1,6 @@
-using CSGenICam.SDK.Events;
+using KLabPseudoHaptic.Events;
 
-namespace CSGenICam.SDK;
+namespace KLabPseudoHaptic;
 
 /// <summary>
 /// Represents a single GenICam-compatible camera device.

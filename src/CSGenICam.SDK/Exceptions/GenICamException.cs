@@ -1,7 +1,7 @@
-namespace CSGenICam.SDK.Exceptions;
+namespace KLabPseudoHaptic.Exceptions;
 
 /// <summary>
-/// Base exception for all CSGenICam SDK errors.
+/// Base exception for all KLabPseudoHaptic SDK errors.
 /// </summary>
 public class GenICamException : Exception
 {

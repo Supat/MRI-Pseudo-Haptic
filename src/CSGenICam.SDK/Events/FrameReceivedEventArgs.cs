@@ -1,4 +1,4 @@
-namespace CSGenICam.SDK.Events;
+namespace KLabPseudoHaptic.Events;
 
 /// <summary>
 /// Event data for <see cref="ICamera.FrameReceived"/>.

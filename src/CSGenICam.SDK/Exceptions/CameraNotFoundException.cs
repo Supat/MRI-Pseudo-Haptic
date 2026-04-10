@@ -1,4 +1,4 @@
-namespace CSGenICam.SDK.Exceptions;
+namespace KLabPseudoHaptic.Exceptions;
 
 /// <summary>
 /// Thrown when a requested camera cannot be located on the transport layer.

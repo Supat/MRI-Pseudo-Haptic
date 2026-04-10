@@ -1,4 +1,4 @@
-namespace CSGenICam.SDK.Events;
+namespace KLabPseudoHaptic.Events;
 
 /// <summary>
 /// Generic camera lifecycle event data.

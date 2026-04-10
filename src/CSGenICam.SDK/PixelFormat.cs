@@ -1,4 +1,4 @@
-namespace CSGenICam.SDK;
+namespace KLabPseudoHaptic;
 
 /// <summary>
 /// Common GenICam PFNC pixel formats.

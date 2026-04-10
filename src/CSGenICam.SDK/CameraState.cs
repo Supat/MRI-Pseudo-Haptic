@@ -1,4 +1,4 @@
-namespace CSGenICam.SDK;
+namespace KLabPseudoHaptic;
 
 /// <summary>
 /// Operational state of an <see cref="ICamera"/>.
