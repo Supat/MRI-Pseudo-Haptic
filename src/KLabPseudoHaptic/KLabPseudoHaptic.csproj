@@ -5,9 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>KLabPseudoHaptic</RootNamespace>
-    <AssemblyName>CSGenICam.SDK</AssemblyName>
+    <AssemblyName>KLabPseudoHaptic</AssemblyName>
     <Version>0.1.0</Version>
-    <Authors>CSGenICam SDK Contributors</Authors>
+    <Authors>KLabPseudoHaptic Contributors</Authors>
     <Description>C# SDK for GenICam-compatible cameras.</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
