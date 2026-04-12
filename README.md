@@ -42,14 +42,86 @@ hosts the MediaPipe model.
     └── mediapipe_hand_tracker.py    # Python MediaPipe sidecar
 ```
 
-## Prerequisites
+## Recommended IDE
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download)
-- Python 3.9+ with `mediapipe` and `opencv-python`:
-  ```bash
-  pip install mediapipe opencv-python
-  ```
-- A working webcam accessible by OpenCV
+| IDE | Platform | Notes |
+|-----|----------|-------|
+| **[Visual Studio 2022](https://visualstudio.microsoft.com/)** (Community edition is free) | Windows | Best-in-class .NET experience. Open `KLabPseudoHaptic.sln` directly. |
+| **[JetBrains Rider](https://www.jetbrains.com/rider/)** | Windows / macOS / Linux | Full .NET IDE with built-in test runner and NuGet manager. |
+| **[Visual Studio Code](https://code.visualstudio.com/)** | Windows / macOS / Linux | Lightweight editor. Install the **C# Dev Kit** extension for IntelliSense, debugging, and test discovery. |
+
+Any of the above will open the `.sln` file, resolve NuGet packages, and let you
+build, run, and debug the project. Visual Studio 2022 is recommended on Windows
+for the most seamless experience.
+
+## Installation
+
+Follow the steps below to set up everything needed to build and run the project.
+
+### 1. Install the .NET 8 SDK
+
+Download and install the .NET 8 SDK from
+[https://dotnet.microsoft.com/download/dotnet/8.0](https://dotnet.microsoft.com/download/dotnet/8.0).
+
+Verify the installation:
+
+```bash
+dotnet --version
+# Expected output: 8.x.x
+```
+
+> **Visual Studio 2022 users:** the .NET 8 SDK is bundled with VS 2022 17.8+.
+> Ensure the **.NET desktop development** workload is selected in the Visual
+> Studio Installer.
+
+### 2. Install Python 3.9+
+
+Download Python from [https://www.python.org/downloads/](https://www.python.org/downloads/)
+(3.9 or later). On Windows, check **"Add Python to PATH"** during installation.
+
+Verify the installation:
+
+```bash
+python3 --version   # or 'python --version' on Windows
+# Expected output: Python 3.9.x or later
+```
+
+### 3. Install Python dependencies
+
+The MediaPipe sidecar requires `mediapipe` and `opencv-python`. It is
+recommended to use a virtual environment:
+
+```bash
+# Create and activate a virtual environment (optional but recommended)
+python3 -m venv .venv
+source .venv/bin/activate        # Linux / macOS
+# .venv\Scripts\activate         # Windows (cmd)
+# .venv\Scripts\Activate.ps1     # Windows (PowerShell)
+
+# Install the packages
+pip install mediapipe opencv-python
+```
+
+### 4. Restore NuGet packages
+
+```bash
+dotnet restore KLabPseudoHaptic.sln
+```
+
+This downloads the xUnit and test-SDK packages referenced by the test project.
+If you are using Visual Studio or Rider, this step happens automatically when
+you open the solution.
+
+### 5. Verify your webcam
+
+The sidecar uses OpenCV's default camera (`index 0`). Confirm your webcam is
+accessible:
+
+```bash
+python3 -c "import cv2; cap = cv2.VideoCapture(0); print('OK' if cap.isOpened() else 'FAIL'); cap.release()"
+```
+
+If you need a different camera, pass `--camera <index>` when running the app.
 
 ## Build
 
