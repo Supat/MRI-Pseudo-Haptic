@@ -44,6 +44,13 @@ TestResult.xml
 coverage*.xml
 coverage*.json
 
+# ONNX / ML models (downloaded, not checked in)
+*.onnx
+*.tflite
+
+# Python virtual environment
+.venv/
+
 # OS files
 .DS_Store
 Thumbs.db
