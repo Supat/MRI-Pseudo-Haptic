@@ -13,13 +13,6 @@
     <ProjectReference Include="..\..\src\KLabPseudoHaptic\KLabPseudoHaptic.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="..\..\tools\mediapipe_hand_tracker.py">
-      <Link>tools\mediapipe_hand_tracker.py</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
   <!--
     OpenCvSharp4 requires a platform-specific native runtime package.
     Uncomment the one matching your OS, or add all three for a portable build.

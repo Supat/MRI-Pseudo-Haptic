@@ -1,24 +1,25 @@
 # MRI Pseudo-Haptic
 
-A .NET 8 toolkit for estimating wrist posture from a webcam feed using Google's
-[MediaPipe Hands](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker)
-model and broadcasting the result over TCP for use by downstream MRI
+A pure .NET 8 toolkit for estimating wrist posture from a webcam feed using
+Google's [MediaPipe Hands](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker)
+ONNX models and broadcasting the result over TCP for use by downstream MRI
 pseudo-haptic feedback components.
 
-The project supports **two detector backends**:
-
-| Backend | Dependencies | Description |
-|---------|-------------|-------------|
-| **ONNX (default)** | .NET only | Runs the MediaPipe hand models natively via ONNX Runtime + OpenCvSharp. No Python required. |
-| **MediaPipe sidecar** | Python 3.9+ | Launches a Python sidecar process that hosts MediaPipe Hands. |
+The entire runtime is native .NET — **no Python installation is required**.
+Camera capture is handled by OpenCvSharp and model inference by ONNX Runtime.
 
 ## Pipeline
 
 ```
-                 ┌─ ONNX detector (OpenCvSharp + OnnxRuntime) ─┐
- camera ─────────┤                                             ├─► WristAngleCalculator ─┬─► console display
-                 └─ Python sidecar (MediaPipe, optional) ──────┘                         └─► TcpAngleBroadcaster
-                                                                                               127.0.0.1:5005
+ camera (OpenCvSharp) ──► PalmDetector (ONNX) ──► HandLandmarkExtractor (ONNX)
+                                                          │
+                                                          ▼
+                                                  WristAngleCalculator
+                                                          │
+                                               ┌──────────┴──────────┐
+                                               ▼                     ▼
+                                        console display     TcpAngleBroadcaster
+                                                              127.0.0.1:5005
 ```
 
 ## Repository layout
@@ -40,7 +41,6 @@ The project supports **two detector backends**:
 ├── tests/
 │   └── KLabPseudoHaptic.Tests/         # xUnit tests
 └── tools/
-    ├── mediapipe_hand_tracker.py       # Python sidecar (fallback)
     ├── download_models.sh              # Model download + conversion (Linux/macOS)
     └── download_models.ps1             # Model download + conversion (Windows)
 ```
@@ -87,8 +87,8 @@ the solution.
 
 ### 3. Download ONNX models
 
-The ONNX detector needs two model files. A download-and-convert script is
-provided:
+The detector needs two ONNX model files. A download-and-convert helper script
+is provided:
 
 ```bash
 # Linux / macOS
@@ -109,8 +109,9 @@ to ONNX via `tf2onnx`, and places them in `app/KLabPseudoHaptic.App/models/`:
 - `palm_detection_lite.onnx`
 - `hand_landmark_lite.onnx`
 
-> The `tf2onnx` conversion is a **one-time setup step**. Once the `.onnx` files
-> exist, Python is not needed at runtime.
+> **`tf2onnx` is only needed once at setup time** to convert the model files.
+> After the `.onnx` files are generated, Python is never used again — the
+> application runs entirely on .NET.
 
 ### 4. Verify your webcam
 
@@ -118,20 +119,8 @@ to ONNX via `tf2onnx`, and places them in `app/KLabPseudoHaptic.App/models/`:
 dotnet run --project app/KLabPseudoHaptic.App -- --camera 0
 ```
 
-If the app starts and prints `KLabPseudoHaptic wrist tracker`, your webcam is
-working. If you need a different camera, change the index.
-
-### (Optional) Python sidecar setup
-
-Only needed if you want to use the `--detector mediapipe` fallback:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate        # Linux / macOS
-# .venv\Scripts\activate         # Windows (cmd)
-
-pip install mediapipe opencv-python
-```
+If the app starts and prints `KLabPseudoHaptic wrist tracker (ONNX native)`,
+your webcam is working. If you need a different camera, change the index.
 
 ## Build
 
@@ -142,28 +131,20 @@ dotnet build KLabPseudoHaptic.sln
 ## Run
 
 ```bash
-# Default: ONNX-native detector (no Python)
 dotnet run --project app/KLabPseudoHaptic.App
 
-# Explicit ONNX with custom model paths
+# With custom model paths
 dotnet run --project app/KLabPseudoHaptic.App -- \
-    --detector onnx \
     --palm-model path/to/palm_detection_lite.onnx \
     --landmark-model path/to/hand_landmark_lite.onnx
-
-# Fallback: Python MediaPipe sidecar
-dotnet run --project app/KLabPseudoHaptic.App -- --detector mediapipe
 ```
 
 All flags:
 
 | Flag               | Default                                              | Description                                  |
 |--------------------|------------------------------------------------------|----------------------------------------------|
-| `--detector`       | `onnx`                                               | Backend: `onnx` or `mediapipe`.              |
 | `--palm-model`     | `models/palm_detection_lite.onnx` in build output    | Path to the palm detection ONNX model.       |
 | `--landmark-model` | `models/hand_landmark_lite.onnx` in build output     | Path to the hand landmark ONNX model.        |
-| `--python`         | `python3` (or `$KLAB_PYTHON`)                        | Python interpreter (mediapipe mode only).    |
-| `--script`         | `tools/mediapipe_hand_tracker.py` in build output    | Sidecar script path (mediapipe mode only).   |
 | `--camera`         | `0`                                                  | OpenCV camera index.                         |
 | `--port`           | `5005`                                               | TCP loopback port to broadcast on.           |
 
