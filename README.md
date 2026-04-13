@@ -1,25 +1,32 @@
 # MRI Pseudo-Haptic
 
-A pure .NET 8 toolkit for estimating wrist posture from a webcam feed using
+A pure .NET 8 toolkit for estimating wrist posture from a camera feed using
 Google's [MediaPipe Hands](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker)
 ONNX models and broadcasting the result over TCP for use by downstream MRI
 pseudo-haptic feedback components.
 
 The entire runtime is native .NET — **no Python installation is required**.
-Camera capture is handled by OpenCvSharp and model inference by ONNX Runtime.
+Model inference is handled by ONNX Runtime, with pluggable camera sources:
+
+| Source | Description |
+|--------|-------------|
+| **OpenCV** (default) | Standard webcam via OpenCvSharp. |
+| **SphinxSDK v2.1.4.1** | Industrial/scientific GenICam camera via SphinxSDK native interop. |
 
 ## Pipeline
 
 ```
- camera (OpenCvSharp) ──► PalmDetector (ONNX) ──► HandLandmarkExtractor (ONNX)
-                                                          │
-                                                          ▼
-                                                  WristAngleCalculator
-                                                          │
-                                               ┌──────────┴──────────┐
-                                               ▼                     ▼
-                                        console display     TcpAngleBroadcaster
-                                                              127.0.0.1:5005
+ ┌─ OpenCvCameraSource (webcam) ─┐
+ │                               ├─► PalmDetector ──► HandLandmarkExtractor
+ └─ SphinxCameraSource (SDK)  ───┘      (ONNX)              (ONNX)
+                                                               │
+                                                               ▼
+                                                       WristAngleCalculator
+                                                               │
+                                                    ┌──────────┴──────────┐
+                                                    ▼                     ▼
+                                             console display     TcpAngleBroadcaster
+                                                                   127.0.0.1:5005
 ```
 
 ## Repository layout
@@ -113,14 +120,26 @@ to ONNX via `tf2onnx`, and places them in `app/KLabPseudoHaptic.App/models/`:
 > After the `.onnx` files are generated, Python is never used again — the
 > application runs entirely on .NET.
 
-### 4. Verify your webcam
+### 4. (Optional) SphinxSDK setup
+
+Only required when using `--source sphinx`. Install SphinxSDK v2.1.4.1 and
+ensure the native library is loadable:
+
+- **Windows:** Place `SphinxSDK.dll` on `PATH` or alongside the executable.
+- **Linux:** Place `libsphinxsdk.so` on `LD_LIBRARY_PATH`.
+
+### 5. Verify your camera
 
 ```bash
+# OpenCV webcam (default)
 dotnet run --project app/KLabPseudoHaptic.App -- --camera 0
+
+# SphinxSDK camera
+dotnet run --project app/KLabPseudoHaptic.App -- --source sphinx --camera 0
 ```
 
 If the app starts and prints `KLabPseudoHaptic wrist tracker (ONNX native)`,
-your webcam is working. If you need a different camera, change the index.
+your camera is working. If you need a different device, change the index.
 
 ## Build
 
@@ -131,9 +150,15 @@ dotnet build KLabPseudoHaptic.sln
 ## Run
 
 ```bash
+# OpenCV webcam (default)
 dotnet run --project app/KLabPseudoHaptic.App
 
-# With custom model paths
+# SphinxSDK camera with custom resolution
+dotnet run --project app/KLabPseudoHaptic.App -- \
+    --source sphinx --camera 0 \
+    --sphinx-width 1280 --sphinx-height 720 --sphinx-pixel-format RGB8
+
+# Custom ONNX model paths
 dotnet run --project app/KLabPseudoHaptic.App -- \
     --palm-model path/to/palm_detection_lite.onnx \
     --landmark-model path/to/hand_landmark_lite.onnx
@@ -141,12 +166,17 @@ dotnet run --project app/KLabPseudoHaptic.App -- \
 
 All flags:
 
-| Flag               | Default                                              | Description                                  |
-|--------------------|------------------------------------------------------|----------------------------------------------|
-| `--palm-model`     | `models/palm_detection_lite.onnx` in build output    | Path to the palm detection ONNX model.       |
-| `--landmark-model` | `models/hand_landmark_lite.onnx` in build output     | Path to the hand landmark ONNX model.        |
-| `--camera`         | `0`                                                  | OpenCV camera index.                         |
-| `--port`           | `5005`                                               | TCP loopback port to broadcast on.           |
+| Flag                    | Default                                              | Description                                    |
+|-------------------------|------------------------------------------------------|------------------------------------------------|
+| `--source`              | `opencv`                                             | Camera source: `opencv` or `sphinx`.           |
+| `--palm-model`          | `models/palm_detection_lite.onnx` in build output    | Path to the palm detection ONNX model.         |
+| `--landmark-model`      | `models/hand_landmark_lite.onnx` in build output     | Path to the hand landmark ONNX model.          |
+| `--camera`              | `0`                                                  | Device index (OpenCV or SphinxSDK).            |
+| `--port`                | `5005`                                               | TCP loopback port to broadcast on.             |
+| `--sphinx-width`        | device default                                       | SphinxSDK capture width in pixels.             |
+| `--sphinx-height`       | device default                                       | SphinxSDK capture height in pixels.            |
+| `--sphinx-pixel-format` | device default                                       | SphinxSDK GenICam pixel format (e.g. `RGB8`).  |
+| `--sphinx-timeout`      | `1000`                                               | SphinxSDK frame grab timeout in ms.            |
 
 While running, the console shows a single-line live status:
 

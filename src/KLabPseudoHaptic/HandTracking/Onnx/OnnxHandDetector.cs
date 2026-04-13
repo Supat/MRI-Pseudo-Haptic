@@ -5,18 +5,13 @@ namespace KLabPseudoHaptic.HandTracking.Onnx;
 
 /// <summary>
 /// <see cref="IHandLandmarkDetector"/> implementation that uses ONNX Runtime to
-/// run the MediaPipe palm detection and hand landmark models natively in .NET,
-/// with camera capture via OpenCvSharp. No Python installation is required.
+/// run the MediaPipe palm detection and hand landmark models natively in .NET.
 /// </summary>
 /// <remarks>
-/// The detector implements the standard two-stage MediaPipe Hands pipeline:
-/// <list type="number">
-///   <item>A lightweight SSD palm detector locates hands in the full frame.</item>
-///   <item>An affine-aligned crop of each detected palm is fed to the hand
-///         landmark model, which produces 21 3D keypoints.</item>
-/// </list>
-/// Both ONNX models must be downloaded separately; see
-/// <c>tools/download_models.sh</c>.
+/// Camera frames are obtained from an <see cref="ICameraSource"/>. When no
+/// explicit source is provided via <see cref="OnnxHandDetectorOptions.CameraSource"/>,
+/// a default <see cref="OpenCvCameraSource"/> is used. To capture from SphinxSDK
+/// hardware, supply a <see cref="SphinxCameraSource"/> instance instead.
 /// </remarks>
 public sealed class OnnxHandDetector : IHandLandmarkDetector
 {
@@ -44,44 +39,52 @@ public sealed class OnnxHandDetector : IHandLandmarkDetector
             _options.HandLandmarkModelPath,
             _options.MinLandmarkConfidence);
 
-        using var capture = new VideoCapture(_options.CameraIndex);
-        if (!capture.IsOpened())
+        // Use the supplied camera source, or fall back to OpenCV.
+        var ownsSource = _options.CameraSource is null;
+        var source = _options.CameraSource ?? new OpenCvCameraSource(_options.CameraIndex);
+
+        try
         {
-            throw new InvalidOperationException(
-                $"Failed to open camera at index {_options.CameraIndex}.");
+            if (!source.IsOpened)
+            {
+                source.Open();
+            }
+
+            using var frame = new Mat();
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                if (!source.TryReadFrame(frame))
+                {
+                    await Task.Yield();
+                    continue;
+                }
+
+                var inputData = PreprocessForPalmDetector(frame);
+
+                var palms = palmDetector.Detect(inputData);
+                if (palms.Count == 0)
+                {
+                    await Task.Yield();
+                    continue;
+                }
+
+                var landmarks = landmarkExtractor.Extract(frame, palms[0]);
+                if (landmarks is not null)
+                {
+                    yield return landmarks;
+                }
+                else
+                {
+                    await Task.Yield();
+                }
+            }
         }
-
-        using var frame = new Mat();
-
-        while (!cancellationToken.IsCancellationRequested)
+        finally
         {
-            if (!capture.Read(frame) || frame.Empty())
+            if (ownsSource)
             {
-                // Allow cancellation checks between failed reads.
-                await Task.Yield();
-                continue;
-            }
-
-            // Preprocess for the palm detector: resize to 192 x 192, BGR → RGB,
-            // normalise to [0, 1].
-            var inputData = PreprocessForPalmDetector(frame);
-
-            var palms = palmDetector.Detect(inputData);
-            if (palms.Count == 0)
-            {
-                await Task.Yield();
-                continue;
-            }
-
-            // Extract landmarks for the first (highest-scoring) palm.
-            var landmarks = landmarkExtractor.Extract(frame, palms[0]);
-            if (landmarks is not null)
-            {
-                yield return landmarks;
-            }
-            else
-            {
-                await Task.Yield();
+                source.Dispose();
             }
         }
     }
